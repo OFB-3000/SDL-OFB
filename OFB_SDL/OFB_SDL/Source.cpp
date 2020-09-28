@@ -16,16 +16,16 @@ const int mapWidth = 10;
 const int mapHeight = 10;
 
 const int worldMap[mapWidth][mapHeight] = {
-	{1111111111},
-	{1000000001},
-	{1000000001},
-	{1000000001},
-	{1000000001},
-	{1000000001},
-	{1000000001},
-	{1000000001},
-	{1000000001},
-	{1111111111}
+	{1,1,1,1,1,1,1,1,1,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,0,0,0,0,0,0,0,0,1},
+	{1,1,1,1,1,1,1,1,1,1}
 };
 
 //Some useful globals
@@ -77,7 +77,6 @@ private:
 
 	void mainLoop()
 	{
-
 		printf("Entering main loop\n");
 
 		//timing for input and FPS counter
@@ -92,12 +91,67 @@ private:
 		while (keepAlive) {
 			SDL_Event event;
 
+			SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 			SDL_RenderClear(renderer);
+
+			/* Event polling */
+			while (SDL_PollEvent(&event) != 0) {
+				//User requests quit
+				if (event.type == SDL_QUIT)
+				{
+					printf("Exiting\n");
+					keepAlive = false;
+				}
+
+				if (event.type == SDL_KEYDOWN)
+				{
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_SPACE:
+						printf("Space\n");
+						break;
+
+					case SDLK_ESCAPE:
+						printf("Exiting\n");
+						keepAlive = false;
+						break;
+					case SDLK_w:
+						printf("Pressed W\n");
+						if (worldMap[int(posX + dirX * moveSpeed)][int(posY)] == false) posX += dirX * moveSpeed;
+						if (worldMap[int(posX)][int(posY + dirY * moveSpeed)] == false) posY += dirY * moveSpeed;
+						break;
+					case SDLK_s:
+						printf("Pressed S\n");
+						if (worldMap[int(posX - dirX * moveSpeed)][int(posY)] == false) posX -= dirX * moveSpeed;
+						if (worldMap[int(posX)][int(posY - dirY * moveSpeed)] == false) posY -= dirY * moveSpeed;
+						break;
+					case SDLK_RIGHT:
+						printf("Pressed ->\n");
+						oldDirX = dirX;
+						dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed);
+						dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed);
+						oldPlaneX = planeX;
+						planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
+						planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
+						break;
+					case SDLK_LEFT:
+						printf("Pressed <-\n");
+						oldDirX = dirX;
+						dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed);
+						dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed);
+						oldPlaneX = planeX;
+						planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed);
+						planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed);
+						break;
+					default:
+						break;
+					}
+				}
+			}
 
 			/* Calculations */
 			for (int x = 0; x < w; x++)
 			{
-				
 				//calculate ray position and direction
 				double cameraX = 2 * x / (double)w - 1; //x-coordinate in camera space
 				double rayDirX = dirX + planeX * cameraX;
@@ -175,96 +229,38 @@ private:
 				if (drawEnd >= h)drawEnd = h - 1;
 
 				//choose wall color
-				int r, g, b;
+				//ColorRGB color;
+				switch (worldMap[mapX][mapY])
+				{
+				case 1:
+					if (side == 1) 
+					{ 
+						SDL_SetRenderDrawColor(renderer, 255 / 2, 255 / 2, 255 / 2, SDL_ALPHA_OPAQUE);
+					}
+					else
+					{
+						SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+					}
 
-				//switch (worldMap[mapX][mapY])
-				//{
-				//case 1:
-				//	// White
-				//	//r = 255;
-				//	//g = 255;
-				//	//b = 255;
-				//	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-				//	break;
-				//default:
-				//	// Black
-				//	//r = 0;
-				//	//g = 0;
-				//	//b = 0;
-				//	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-				//	break;
-				//}
+					break;
+				default: 
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+					break;
+				}
 
 				//give x and y sides different brightness
 				//if (side == 1) { color = color / 2; }
 
 				//draw the pixels of the stripe as a vertical line
-				//verLine(x, drawStart, drawEnd, color);
-
-				/* Rendering */
-				SDL_RenderClear(renderer);
-				SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+				//SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 				SDL_RenderDrawLine(renderer, x, drawStart, x, drawEnd);
-				
-
 			}
+
+
+			/* Rendering */
+			//SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+			//SDL_RenderDrawLine(renderer, 0, 0, 640, 300);
 			SDL_RenderPresent(renderer);
-
-			/* Event polling */
-			while (SDL_PollEvent(&event) != 0) {
-				//User requests quit
-				if (event.type == SDL_QUIT)
-				{
-					printf("Exiting\n");
-					keepAlive = false;
-				}
-
-				if (event.type == SDL_KEYDOWN)
-				{
-					switch (event.key.keysym.sym)
-					{
-					case SDLK_SPACE:
-						printf("Space\n");
-						break;
-
-					case SDLK_ESCAPE:
-						printf("Exiting\n");
-						keepAlive = false;
-						break;
-					case SDLK_w:
-						printf("Pressed W\n");
-						if (worldMap[int(posX + dirX * moveSpeed)][int(posY)] == false) posX += dirX * moveSpeed;
-						if (worldMap[int(posX)][int(posY + dirY * moveSpeed)] == false) posY += dirY * moveSpeed;
-						break;
-					case SDLK_s:
-						printf("Pressed S\n");
-						if (worldMap[int(posX - dirX * moveSpeed)][int(posY)] == false) posX -= dirX * moveSpeed;
-						if (worldMap[int(posX)][int(posY - dirY * moveSpeed)] == false) posY -= dirY * moveSpeed;
-						break;
-					case SDLK_RIGHT:
-						printf("Pressed ->\n");
-						oldDirX = dirX;
-						dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed);
-						dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed);
-						oldPlaneX = planeX;
-						planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
-						planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
-						break;
-					case SDLK_LEFT:
-						printf("Pressed <-\n");
-						oldDirX = dirX;
-						dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed);
-						dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed);
-						oldPlaneX = planeX;
-						planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed);
-						planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed);
-						break;
-					default:
-						break;
-					}
-				}
-			}
-
 		}
 	}
 
