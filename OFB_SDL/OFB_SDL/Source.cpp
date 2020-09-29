@@ -393,6 +393,7 @@ public:
 
 				int hit = 0; //was there a wall hit?
 				int side; //was a NS or a EW wall hit?
+
 				//calculate step and initial sideDist
 				if (rayDirX < 0)
 				{
